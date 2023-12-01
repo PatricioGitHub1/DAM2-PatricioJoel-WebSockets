@@ -120,6 +120,8 @@ public class AppData {
 
         String type = data.getString("type");
         switch (type) {
+            case "start_game":
+                print("Mi rival es " + data.getJSONString("name"));
             case "list":
                 clients.clear();
                 data.getJSONArray("list").forEach(item -> clients.add(item.toString()));
@@ -128,8 +130,12 @@ public class AppData {
                 updateClientList();
                 break;
             case "id":
-                mySocketId = data.getString("value");
-                messages.append("Id received: ").append(data.getString("value")).append("\n");
+                JSONObject message1 = new JSONObject();
+                message1.put("type", "username");
+                message1.put("id", data.getString("id"));
+                message1.put("name", "Joel");
+                socketClient.send(message1.toString());
+                // messages.append("Id received: ").append(data.getString("value")).append("\n");
                 break;
             case "connected":
                 clients.add(data.getString("id"));
