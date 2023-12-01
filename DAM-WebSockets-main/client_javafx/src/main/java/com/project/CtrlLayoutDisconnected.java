@@ -22,6 +22,9 @@ public class CtrlLayoutDisconnected {
     @FXML
     private TextField portTextField;
 
+    @FXML
+    private TextField nameTextField;
+
     private AppData appData;
 
     Rectangle rect = new Rectangle();
@@ -40,20 +43,23 @@ public class CtrlLayoutDisconnected {
 
         ipTextField.setText(appData.getIp());
         portTextField.setText(appData.getPort());
-
+        nameTextField.setText(appData.getName());
+        /*
         Platform.runLater(() -> {
             draw();
         });
+        */
     }
 
     @FXML
     private void connectToServer() {
         appData.setIp(ipTextField.getText());
         appData.setPort(portTextField.getText());
+        appData.setName(nameTextField.getText());
         appData.connectToServer();
 
     }
-
+    /*
     private void draw() {
         double height = refAnchorPane.getHeight();
         double bottom = height - 100;
@@ -80,4 +86,5 @@ public class CtrlLayoutDisconnected {
         AnchorPane.setTopAnchor(circle, bottom);
         refAnchorPane.getChildren().add(circle);
     }
+    */
 }

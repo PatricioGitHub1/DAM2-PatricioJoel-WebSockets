@@ -24,6 +24,7 @@ public class AppData {
     private AppSocketsClient socketClient;
     private String ip = "localhost";
     private String port = "8888";
+    private String name = "";
     private ConnectionStatus connectionStatus = ConnectionStatus.DISCONNECTED;
     private String mySocketId;
     private List<String> clients = new ArrayList<>();
@@ -86,7 +87,7 @@ public class AppData {
         pause.setOnFinished(event -> {
             if (connectionStatus == ConnectionStatus.CONNECTED) {
                 CtrlLayoutConnected ctrlConnected = (CtrlLayoutConnected) UtilsViews.getController("Connected");
-                ctrlConnected.updateInfo();
+                // ctrlConnected.updateInfo();
                 UtilsViews.setViewAnimating("Connected");
             } else {
                 UtilsViews.setViewAnimating("Disconnected");
@@ -162,7 +163,7 @@ public class AppData {
         }
         if (connectionStatus == ConnectionStatus.CONNECTED) {
             CtrlLayoutConnected ctrlConnected = (CtrlLayoutConnected) UtilsViews.getController("Connected");
-            ctrlConnected.updateMessages(messages.toString());        
+            // ctrlConnected.updateMessages(messages.toString());        
         }
     }
 
@@ -184,7 +185,7 @@ public class AppData {
     public void updateClientList() {
         if (connectionStatus == ConnectionStatus.CONNECTED) {
             CtrlLayoutConnected ctrlConnected = (CtrlLayoutConnected) UtilsViews.getController("Connected");
-            ctrlConnected.updateClientList(clients);
+            // ctrlConnected.updateClientList(clients);
         }
     }
 
@@ -240,6 +241,14 @@ public class AppData {
 
     public String setPort (String port) {
         return this.port = port;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String setName(String name) {
+        return this.name = name;
     }
 
     public String getMySocketId () {
