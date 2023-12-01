@@ -12,6 +12,7 @@ class LayoutDisconnected extends StatefulWidget {
 class _LayoutDisconnectedState extends State<LayoutDisconnected> {
   final _ipController = TextEditingController();
   final _portController = TextEditingController();
+  final _usernameController = TextEditingController();
 
   Widget _buildTextFormField(
     String label,
@@ -53,6 +54,8 @@ class _LayoutDisconnectedState extends State<LayoutDisconnected> {
           const SizedBox(height: 20),
           _buildTextFormField("Server port", appData.port, _portController),
           const SizedBox(height: 20),
+          _buildTextFormField("Username", appData.username, _usernameController),
+          const SizedBox(height: 20),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             SizedBox(
               width: 96,
@@ -61,6 +64,8 @@ class _LayoutDisconnectedState extends State<LayoutDisconnected> {
                 onPressed: () {
                   appData.ip = _ipController.text;
                   appData.port = _portController.text;
+                  appData.username = _usernameController.text;
+                  print("Mi user es = "+appData.username);
                   appData.connectToServer();
                 },
                 padding: EdgeInsets.zero,

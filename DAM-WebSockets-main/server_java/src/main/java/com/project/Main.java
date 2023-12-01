@@ -27,6 +27,13 @@ import java.util.Enumeration;
         - Client disconnected   { "type": "disconnected", "from": "server", "id": "001" }
  */
 
+ /*
+  
+    Server a cliente:
+    
+
+  */
+
 public class Main {
 
 

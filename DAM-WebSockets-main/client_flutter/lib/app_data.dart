@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:web_socket_channel/io.dart';
@@ -12,12 +13,15 @@ enum ConnectionStatus {
   disconnected,
   disconnecting,
   connecting,
+  matchmaking,
   connected,
 }
 
 class AppData with ChangeNotifier {
   String ip = "localhost";
   String port = "8888";
+  
+  String username = "User_${Random().nextInt(100)}";
 
   IOWebSocketChannel? _socketClient;
   ConnectionStatus connectionStatus = ConnectionStatus.disconnected;
@@ -56,7 +60,7 @@ class AppData with ChangeNotifier {
     notifyListeners();
 
     // Simulate connection delay
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 2));
 
     _socketClient = IOWebSocketChannel.connect("ws://$ip:$port");
     _socketClient!.stream.listen(
@@ -68,6 +72,10 @@ class AppData with ChangeNotifier {
         }
 
         switch (data['type']) {
+          case 'start_game':
+          print("Mi rival es = ${data.toString()}");
+
+            break;
           case 'list':
             clients = (data['list'] as List).map((e) => e.toString()).toList();
             clients.remove(mySocketId);
@@ -76,6 +84,7 @@ class AppData with ChangeNotifier {
           case 'id':
             mySocketId = data['value'];
             messages += "Id received: ${data['value']}\n";
+            sendNameMessage(data['value'], username);
             break;
           case 'connected':
             clients.add(data['id']);
@@ -118,6 +127,18 @@ class AppData with ChangeNotifier {
         notifyListeners();
       },
     );
+
+  }
+
+  sendNameMessage(String id, String username) {
+    // Message on connection to send Username to server
+    final usernameMessage = {
+      'type': 'username',
+      'id' : id,
+      'name' : username
+    };
+    _socketClient!.sink.add(jsonEncode(usernameMessage));
+    print("Enviado username ${usernameMessage}\n===============");
   }
 
   disconnectFromServer() async {

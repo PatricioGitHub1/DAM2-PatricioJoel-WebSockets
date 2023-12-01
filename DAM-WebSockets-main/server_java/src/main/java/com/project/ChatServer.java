@@ -12,6 +12,7 @@ import org.json.JSONObject;
 public class ChatServer extends WebSocketServer {
 
     static BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+    AppData appData = AppData.getInstance();
 
     public ChatServer (int port) {
         super(new InetSocketAddress(port));
@@ -37,7 +38,7 @@ public class ChatServer extends WebSocketServer {
         JSONObject objWlc = new JSONObject("{}");
         objWlc.put("type", "private");
         objWlc.put("from", "server");
-        objWlc.put("value", "Welcome to the chat server");
+        objWlc.put("value", "Welcome to Memory");
         conn.send(objWlc.toString()); 
 
         // Li enviem el seu identificador
@@ -48,18 +49,18 @@ public class ChatServer extends WebSocketServer {
         conn.send(objId.toString()); 
 
         // Enviem al client la llista amb tots els clients connectats
-        sendList(conn);
+        //sendList(conn);
 
         // Enviem la direcció URI del nou client a tothom 
-        JSONObject objCln = new JSONObject("{}");
+        /*JSONObject objCln = new JSONObject("{}");
         objCln.put("type", "connected");
         objCln.put("from", "server");
         objCln.put("id", clientId);
-        broadcast(objCln.toString());
+        broadcast(objCln.toString());*/
 
         // Mostrem per pantalla (servidor) la nova connexió
-        String host = conn.getRemoteSocketAddress().getAddress().getHostAddress();
-        System.out.println("New client (" + clientId + "): " + host);
+        /*String host = conn.getRemoteSocketAddress().getAddress().getHostAddress();
+        System.out.println("New client (" + clientId + "): " + host);*/
     }
 
     @Override
@@ -86,7 +87,34 @@ public class ChatServer extends WebSocketServer {
             JSONObject objRequest = new JSONObject(message);
             String type = objRequest.getString("type");
 
-            if (type.equalsIgnoreCase("list")) {
+            // Guardamos id con nombre en el Map, y comprovamos si se puede començar la partida
+            if (type.equalsIgnoreCase("username")) {
+                appData.UserNameById.put(objRequest.getString("id"), objRequest.getString("name"));
+                
+                // Si matchamaking nos devuelve array, se puede iniciar partida, enviamos json a jugadores
+                String[] NewGamePlayers = appData.matchmaking(clientId);
+                if (NewGamePlayers != null) {
+                    for (int i = 0; i < NewGamePlayers.length; i++) {
+                        int indexArray = (i + 1) % 2;
+                        System.out.println("Index = "+indexArray);
+                        JSONObject objResponse = new JSONObject("{}");
+                        objResponse.put("type", "start_game");
+                        objResponse.put("from", "server");
+                        objResponse.put("rival_id", NewGamePlayers[indexArray]);
+                        objResponse.put("rival_name", appData.UserNameById.get(NewGamePlayers[indexArray]));
+
+                        WebSocket desti = getClientById(NewGamePlayers[i]);
+
+                        if (desti != null) {
+                            System.out.println("Se envia type start_game");
+                            System.out.println(objResponse.toString());
+                            desti.send(objResponse.toString()); 
+                        }
+                    }
+                }
+
+
+            } else if (type.equalsIgnoreCase("list")) {
                 // El client demana la llista de tots els clients
                 System.out.println("Client '" + clientId + "'' requests list of clients");
                 sendList(conn);
