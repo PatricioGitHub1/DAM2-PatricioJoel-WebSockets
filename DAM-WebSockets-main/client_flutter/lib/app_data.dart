@@ -67,13 +67,18 @@ class AppData with ChangeNotifier {
       (message) {
         final data = jsonDecode(message);
 
-        if (connectionStatus != ConnectionStatus.connected) {
-          connectionStatus = ConnectionStatus.connected;
+        if (connectionStatus != ConnectionStatus.matchmaking) {
+          connectionStatus = ConnectionStatus.matchmaking;
         }
+        
+        print(message.toString());
+        print("=================");
 
         switch (data['type']) {
           case 'start_game':
-          print("Mi rival es = ${data.toString()}");
+          // Esto quiere decir que encontraste rival y comienza la partida
+            print("Mi rival es = ${data['rival_name']}");
+            connectionStatus = ConnectionStatus.connected;
 
             break;
           case 'list':
@@ -82,6 +87,7 @@ class AppData with ChangeNotifier {
             messages += "List of clients: ${data['list']}\n";
             break;
           case 'id':
+          // Esto lo recibes al entablar conexion con el server, te pasa tu ID
             mySocketId = data['value'];
             messages += "Id received: ${data['value']}\n";
             sendNameMessage(data['value'], username);
@@ -138,7 +144,7 @@ class AppData with ChangeNotifier {
       'name' : username
     };
     _socketClient!.sink.add(jsonEncode(usernameMessage));
-    print("Enviado username ${usernameMessage}\n===============");
+    print("Enviado username ${usernameMessage}");
   }
 
   disconnectFromServer() async {

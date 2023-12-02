@@ -102,6 +102,7 @@ public class ChatServer extends WebSocketServer {
                         objResponse.put("from", "server");
                         objResponse.put("rival_id", NewGamePlayers[indexArray]);
                         objResponse.put("rival_name", appData.UserNameById.get(NewGamePlayers[indexArray]));
+                        objResponse.put("isRivalFirst", (i == 1));
 
                         WebSocket desti = getClientById(NewGamePlayers[i]);
 
@@ -111,6 +112,9 @@ public class ChatServer extends WebSocketServer {
                             desti.send(objResponse.toString()); 
                         }
                     }
+
+                    // Generamos tablero y lo enviamos a los jugadores por primera vez
+                    // ( LA IMPLEMENTACION ESTA EN APPDATA, EN TEST.JAVA ESTA LA PRUEBA DE QUE FUNCIONA)
                 }
 
 

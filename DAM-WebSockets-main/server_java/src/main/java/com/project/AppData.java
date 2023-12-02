@@ -1,8 +1,11 @@
 package com.project;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class AppData {
     private static AppData instance;
@@ -36,4 +39,27 @@ public class AppData {
             return NewGame;
         }
     }
+
+    // Funcion para crear tablero aleatorio por primera vez, las cartas tendras nombre tipo 1.jpg, 2.jpg...
+    public int[][] randomBoard() {
+        int[][] matrix = new int[4][4];
+        List<Integer> numbers = new ArrayList<>();
+
+        for (int i = 1; i <= 8; i++) {
+            numbers.add(i);
+            numbers.add(i);
+        }
+
+        Collections.shuffle(numbers, new Random());
+
+        int index = 0;
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                matrix[i][j] = numbers.get(index++);
+            }
+        }
+
+        return matrix;
+    }
+
 }

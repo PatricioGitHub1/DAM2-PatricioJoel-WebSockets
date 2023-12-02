@@ -1,3 +1,4 @@
+import 'package:client_flutter/layout_matchmaking.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'layout_connected.dart';
@@ -26,6 +27,8 @@ class AppState extends State<App> {
         return const LayoutDisconnecting();
       case ConnectionStatus.connecting:
         return const LayoutConnecting();
+      case ConnectionStatus.matchmaking:
+        return const LayoutMatchmaking();
       case ConnectionStatus.connected:
         return const LayoutConnected();
       default:
