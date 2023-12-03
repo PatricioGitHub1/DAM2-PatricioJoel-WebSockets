@@ -86,6 +86,8 @@ public class ChatServer extends WebSocketServer {
     public void onMessage(WebSocket conn, String message) {
         // Quan arriba un missatge
         String clientId = getConnectionId(conn);
+        System.out.println(message);
+        System.out.println("====================");
         try {
             JSONObject objRequest = new JSONObject(message);
             String type = objRequest.getString("type");
@@ -102,7 +104,6 @@ public class ChatServer extends WebSocketServer {
                     // Indicamos a cada jugador su rival y guardamos la conexion en un array
                     for (int i = 0; i < NewGamePlayers.length; i++) {
                         int indexArray = (i + 1) % 2;
-                        System.out.println("Index = "+indexArray);
                         JSONObject objResponse = new JSONObject("{}");
                         objResponse.put("type", "start_game");
                         objResponse.put("from", "server");
@@ -114,8 +115,6 @@ public class ChatServer extends WebSocketServer {
                         connections.add(desti);
 
                         if (desti != null) {
-                            System.out.println("Se envia type start_game");
-                            System.out.println(objResponse.toString());
                             desti.send(objResponse.toString()); 
                         }
                     }
@@ -144,8 +143,9 @@ public class ChatServer extends WebSocketServer {
                         }
             
             } else if (type.equalsIgnoreCase("swap_turn")) {
-                JSONObject objResponse = new JSONObject("{}");
+                JSONObject objResponse = new JSONObject();
                 objResponse.put("type", "swap_turn");
+                objResponse.put("points", objRequest.getInt("points"));
                 WebSocket desti = getClientById(objRequest.getString("destination"));
                 if (desti != null) {
                     desti.send(objResponse.toString()); 
