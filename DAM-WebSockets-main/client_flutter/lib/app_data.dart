@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -32,6 +33,11 @@ class AppData with ChangeNotifier {
   int? selectedClientIndex;
   String messages = "";
 
+  int myPoints = 0;
+  int rivalPoints = 0;
+
+  List<List<int>> currentBoard = List.empty();
+
   bool file_saving = false;
   bool file_loading = false;
 
@@ -62,14 +68,17 @@ class AppData with ChangeNotifier {
     // Simulate connection delay
     await Future.delayed(const Duration(seconds: 2));
 
+    // pantalla matchmaking
+    connectionStatus = ConnectionStatus.matchmaking;
+
     _socketClient = IOWebSocketChannel.connect("ws://$ip:$port");
     _socketClient!.stream.listen(
       (message) {
         final data = jsonDecode(message);
 
-        if (connectionStatus != ConnectionStatus.matchmaking) {
+        /*if (connectionStatus != ConnectionStatus.matchmaking) {
           connectionStatus = ConnectionStatus.matchmaking;
-        }
+        }*/
         
         print(message.toString());
         print("=================");
@@ -78,9 +87,16 @@ class AppData with ChangeNotifier {
           case 'start_game':
           // Esto quiere decir que encontraste rival y comienza la partida
             print("Mi rival es = ${data['rival_name']}");
-            connectionStatus = ConnectionStatus.connected;
+            //connectionStatus = ConnectionStatus.connected;
 
             break;
+
+          case 'new_board':
+            currentBoard = parseJsonMatrix(data['board']);
+            print("la tabla = ");
+            print(currentBoard);
+            connectionStatus = ConnectionStatus.connected;
+
           case 'list':
             clients = (data['list'] as List).map((e) => e.toString()).toList();
             clients.remove(mySocketId);
@@ -264,5 +280,14 @@ class AppData with ChangeNotifier {
       file_loading = false;
       notifyListeners();
     }
+  }
+
+  List<List<int>> parseJsonMatrix(List<dynamic> jsonList) {
+    // Convert the List<dynamic> to List<List<int>>
+    List<List<int>> matrix = List<List<int>>.from(
+      jsonList.map((row) => List<int>.from(row)),
+    );
+
+    return matrix;
   }
 }
