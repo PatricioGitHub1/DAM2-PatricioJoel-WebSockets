@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:web_socket_channel/io.dart';
 
@@ -102,10 +101,6 @@ class AppData with ChangeNotifier {
     _socketClient!.stream.listen(
       (message) async {
         final data = jsonDecode(message);
-
-        /*if (connectionStatus != ConnectionStatus.matchmaking) {
-          connectionStatus = ConnectionStatus.matchmaking;
-        }*/
         
         print(message.toString());
         print("=================");
@@ -137,7 +132,15 @@ class AppData with ChangeNotifier {
             rivalPoints = data['points'];
 
           case 'end_game':
+            rivalPoints = data["sender_points"];
+            myPoints = data['rival_points'];
             isMyTurn = false;
+            if (data["sender_points"] > data["rival_points"]) {
+              isWinner = false;
+            } else {
+              isWinner = true;
+            }
+            notifyListeners();
             showModal(connectedContext!);
             break;
           case 'list':
@@ -366,9 +369,9 @@ class AppData with ChangeNotifier {
     
     if (imagesVisibility.every((dynamic value) => value == true)) {
       print("Se acabo la partida");
-      sendEndGame();
       notifyListeners();
-      showModal(connectedContext!);
+      sendEndGame();
+      
       return;
     }
 
@@ -404,37 +407,71 @@ class AppData with ChangeNotifier {
       'sender_points': myPoints,
       'rival_points': rivalPoints
     };
+    if (myPoints > rivalPoints) {
+      isWinner = true;
+    } else {
+      isWinner = false;
+    }
     isMyTurn = !isMyTurn;
     _socketClient!.sink.add(jsonEncode(message));
+    showModal(connectedContext!);
   }
 
   Future<void> showModal(BuildContext context) async {
-  await showCupertinoModalPopup(
-    context: context,
-    builder: (BuildContext context) => CupertinoActionSheet(
-      title: Text(isWinner ? "You WON!" : "You Losed..."),
-      message: const Text("Would you like to Play Again?"),
-      actions: [
-        CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(context);
-            // Handle 'Yes' option
-            // Add your logic here
-          },
-          child: const Text("Yes"),
-        ),
-        CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(context);
-            disconnectFromServer();
-          },
-          child: const Text("No"),
-        ),
-      ],
-    ),
-  );
+    await showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: Text(isWinner ? "You Won!" : "You Lost..."),
+        message: const Text("Would you like to Play Again?"),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              resetStats(false);
+              Navigator.pop(context);
+            },
+            child: const Text("Yes"),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              resetStats(true);
+            },
+            child: const Text("No"),
+          ),
+        ],
+      ),
+    );
 
-  // This code will be executed after the modal is dismissed
-  disconnectFromServer();
-}
+  }
+
+  // Reset de las stats para volver a jugar si le damos a volver a jugar al acabar la partida
+  resetStats(bool isExiting) {
+    rival_name = "";
+    rival_id = "";
+    isMyTurn = false;
+    isWinner = false;
+    myPoints = 0;
+    rivalPoints = 0;
+    currentBoard = List.empty();
+    imagesVisibility = List.generate(16, (index) => false);
+    flippedCards = 0;
+    indexFlippedCards = [];
+    previousCardValue = 0;
+    
+    if (isExiting == false) {
+      // Mensaje al server para que juegue otra vez
+      final message = {
+        'type': 'play_again'
+      };
+      _socketClient!.sink.add(jsonEncode(message));
+      print("Le diste que Si y deberias estar matchmaking");
+      connectionStatus = ConnectionStatus.matchmaking;
+      notifyListeners();
+      
+    } else {
+      print("Le diste que No y te sales");
+      disconnectFromServer();
+    }
+    
+  }
 }

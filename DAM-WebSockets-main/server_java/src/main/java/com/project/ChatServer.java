@@ -51,19 +51,6 @@ public class ChatServer extends WebSocketServer {
         objId.put("value", clientId);
         conn.send(objId.toString()); 
 
-        // Enviem al client la llista amb tots els clients connectats
-        //sendList(conn);
-
-        // Enviem la direcció URI del nou client a tothom 
-        /*JSONObject objCln = new JSONObject("{}");
-        objCln.put("type", "connected");
-        objCln.put("from", "server");
-        objCln.put("id", clientId);
-        broadcast(objCln.toString());*/
-
-        // Mostrem per pantalla (servidor) la nova connexió
-        /*String host = conn.getRemoteSocketAddress().getAddress().getHostAddress();
-        System.out.println("New client (" + clientId + "): " + host);*/
     }
 
     @Override
@@ -95,43 +82,8 @@ public class ChatServer extends WebSocketServer {
             // Guardamos id con nombre en el Map, y comprovamos si se puede començar la partida
             if (type.equalsIgnoreCase("username")) {
                 appData.UserNameById.put(objRequest.getString("id"), objRequest.getString("name"));
+                handleNewPlayer(clientId);
                 
-                // Si matchamaking nos devuelve array, se puede iniciar partida, enviamos json a jugadores
-                String[] NewGamePlayers = appData.matchmaking(clientId);
-                if (NewGamePlayers != null) {
-                    ArrayList<WebSocket> connections = new ArrayList<>();
-
-                    // Indicamos a cada jugador su rival y guardamos la conexion en un array
-                    for (int i = 0; i < NewGamePlayers.length; i++) {
-                        int indexArray = (i + 1) % 2;
-                        JSONObject objResponse = new JSONObject("{}");
-                        objResponse.put("type", "start_game");
-                        objResponse.put("from", "server");
-                        objResponse.put("rival_id", NewGamePlayers[indexArray]);
-                        objResponse.put("rival_name", appData.UserNameById.get(NewGamePlayers[indexArray]));
-                        objResponse.put("isRivalFirst", (i == 1));
-
-                        WebSocket desti = getClientById(NewGamePlayers[i]);
-                        connections.add(desti);
-
-                        if (desti != null) {
-                            desti.send(objResponse.toString()); 
-                        }
-                    }
-
-                    // Generamos tablero y lo enviamos a los jugadores por primera vez
-                    int[][] newBoard = appData.randomBoard();
-
-                    JSONObject json = new JSONObject();
-                    json.put("type", "new_board");
-                    JSONArray json_board = new JSONArray();
-                    for (int[] row : newBoard) {
-                        json_board.put(row);
-                    }
-
-                    json.put("board", json_board);
-                    appData.sendToUsers(connections, json);
-                }
 
             } else if (type.equalsIgnoreCase("cards_visibility")) {
                 JSONObject objResponse = new JSONObject("{}");
@@ -154,11 +106,16 @@ public class ChatServer extends WebSocketServer {
             } else if (type.equalsIgnoreCase("end_game")) {
                 JSONObject objResponse = new JSONObject("{}");
                 objResponse.put("type", "end_game");
+                objResponse.put("sender_points", objRequest.getInt("sender_points"));
+                objResponse.put("rival_points", objRequest.getInt("rival_points"));
                 WebSocket desti = getClientById(objRequest.getString("destination"));
                 if (desti != null) {
                     desti.send(objResponse.toString()); 
                 }
 
+            } else if (type.equalsIgnoreCase("play_again")) {
+                handleNewPlayer(clientId);
+            
             } else if (type.equalsIgnoreCase("list")) {
                 // El client demana la llista de tots els clients
                 System.out.println("Client '" + clientId + "'' requests list of clients");
@@ -255,6 +212,45 @@ public class ChatServer extends WebSocketServer {
         }
         
         return null;
+    }
+
+    public void handleNewPlayer(String clientId) {
+        // Si matchamaking nos devuelve array, se puede iniciar partida, enviamos json a jugadores
+        String[] NewGamePlayers = appData.matchmaking(clientId);
+        if (NewGamePlayers != null) {
+            ArrayList<WebSocket> connections = new ArrayList<>();
+
+            // Indicamos a cada jugador su rival y guardamos la conexion en un array
+            for (int i = 0; i < NewGamePlayers.length; i++) {
+                int indexArray = (i + 1) % 2;
+                JSONObject objResponse = new JSONObject("{}");
+                objResponse.put("type", "start_game");
+                objResponse.put("from", "server");
+                objResponse.put("rival_id", NewGamePlayers[indexArray]);
+                objResponse.put("rival_name", appData.UserNameById.get(NewGamePlayers[indexArray]));
+                objResponse.put("isRivalFirst", (i == 1));
+
+                WebSocket desti = getClientById(NewGamePlayers[i]);
+
+                if (desti != null) {
+                    desti.send(objResponse.toString()); 
+                    connections.add(desti);
+                }
+            }
+            System.out.println("DESTINOS = "+connections);
+            // Generamos tablero y lo enviamos a los jugadores por primera vez
+            int[][] newBoard = appData.randomBoard();
+            
+            JSONObject json = new JSONObject();
+            json.put("type", "new_board");
+            JSONArray json_board = new JSONArray();
+            for (int[] row : newBoard) {
+                json_board.put(row);
+            }
+
+            json.put("board", json_board);
+            appData.sendToUsers(connections, json);
+        }
     }
 
 }
