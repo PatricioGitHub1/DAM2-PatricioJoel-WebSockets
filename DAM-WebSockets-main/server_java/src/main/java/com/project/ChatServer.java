@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class ChatServer extends WebSocketServer {
@@ -94,6 +97,9 @@ public class ChatServer extends WebSocketServer {
                 // Si matchamaking nos devuelve array, se puede iniciar partida, enviamos json a jugadores
                 String[] NewGamePlayers = appData.matchmaking(clientId);
                 if (NewGamePlayers != null) {
+                    ArrayList<WebSocket> connections = new ArrayList<>();
+
+                    // Indicamos a cada jugador su rival y guardamos la conexion en un array
                     for (int i = 0; i < NewGamePlayers.length; i++) {
                         int indexArray = (i + 1) % 2;
                         System.out.println("Index = "+indexArray);
@@ -105,6 +111,7 @@ public class ChatServer extends WebSocketServer {
                         objResponse.put("isRivalFirst", (i == 1));
 
                         WebSocket desti = getClientById(NewGamePlayers[i]);
+                        connections.add(desti);
 
                         if (desti != null) {
                             System.out.println("Se envia type start_game");
@@ -114,7 +121,17 @@ public class ChatServer extends WebSocketServer {
                     }
 
                     // Generamos tablero y lo enviamos a los jugadores por primera vez
-                    // ( LA IMPLEMENTACION ESTA EN APPDATA, EN TEST.JAVA ESTA LA PRUEBA DE QUE FUNCIONA)
+                    int[][] newBoard = appData.randomBoard();
+
+                    JSONObject json = new JSONObject();
+                    json.put("type", "new_board");
+                    JSONArray json_board = new JSONArray();
+                    for (int[] row : newBoard) {
+                        json_board.put(row);
+                    }
+
+                    json.put("board", json_board);
+                    appData.sendToUsers(connections, json);
                 }
 
 

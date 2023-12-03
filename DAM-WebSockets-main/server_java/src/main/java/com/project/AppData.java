@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.java_websocket.WebSocket;
+import org.json.JSONObject;
+
 public class AppData {
     private static AppData instance;
     // Parejas jugadores
@@ -41,7 +44,7 @@ public class AppData {
     }
 
     // Funcion para crear tablero aleatorio por primera vez, las cartas tendras nombre tipo 1.jpg, 2.jpg...
-    public int[][] randomBoard() {
+    public  int[][] randomBoard() {
         int[][] matrix = new int[4][4];
         List<Integer> numbers = new ArrayList<>();
 
@@ -60,6 +63,13 @@ public class AppData {
         }
 
         return matrix;
+    }
+
+    public void sendToUsers(ArrayList<WebSocket> connections, JSONObject jsonMessage) {
+        System.out.println(jsonMessage.toString());
+        for (WebSocket conn : connections) {
+            conn.send(jsonMessage.toString());
+        }
     }
 
 }
