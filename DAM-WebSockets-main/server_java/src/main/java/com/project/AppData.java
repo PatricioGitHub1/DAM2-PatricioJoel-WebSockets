@@ -72,4 +72,16 @@ public class AppData {
         }
     }
 
+    public String[] findUsersArray(String id) {
+        for (String[] idArray : playersId_matches) {
+            for (String idInArray : idArray) {
+                if (idInArray.equals(id)) {
+                    return idArray;
+                }
+            }
+        }
+
+        return null;
+    }
+
 }

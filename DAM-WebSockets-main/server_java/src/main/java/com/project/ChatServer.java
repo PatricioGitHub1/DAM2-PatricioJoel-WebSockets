@@ -134,6 +134,30 @@ public class ChatServer extends WebSocketServer {
                     appData.sendToUsers(connections, json);
                 }
 
+            } else if (type.equalsIgnoreCase("cards_visibility")) {
+                JSONObject objResponse = new JSONObject("{}");
+                        objResponse.put("type", "cards_visibility");
+                        objResponse.put("booleans", objRequest.getJSONArray("booleans"));
+                        WebSocket desti = getClientById(objRequest.getString("destination"));
+                        if (desti != null) {
+                            desti.send(objResponse.toString()); 
+                        }
+            
+            } else if (type.equalsIgnoreCase("swap_turn")) {
+                JSONObject objResponse = new JSONObject("{}");
+                objResponse.put("type", "swap_turn");
+                WebSocket desti = getClientById(objRequest.getString("destination"));
+                if (desti != null) {
+                    desti.send(objResponse.toString()); 
+                }
+
+            } else if (type.equalsIgnoreCase("end_game")) {
+                JSONObject objResponse = new JSONObject("{}");
+                objResponse.put("type", "end_game");
+                WebSocket desti = getClientById(objRequest.getString("destination"));
+                if (desti != null) {
+                    desti.send(objResponse.toString()); 
+                }
 
             } else if (type.equalsIgnoreCase("list")) {
                 // El client demana la llista de tots els clients
@@ -232,4 +256,5 @@ public class ChatServer extends WebSocketServer {
         
         return null;
     }
+
 }
