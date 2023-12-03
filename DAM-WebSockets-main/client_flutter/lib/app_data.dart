@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -23,6 +22,8 @@ class AppData with ChangeNotifier {
   String port = "8888";
   
   String username = "User_${Random().nextInt(100)}";
+  String rival_name = "";
+  String rival_id = "";
 
   IOWebSocketChannel? _socketClient;
   ConnectionStatus connectionStatus = ConnectionStatus.disconnected;
@@ -33,16 +34,39 @@ class AppData with ChangeNotifier {
   int? selectedClientIndex;
   String messages = "";
 
+  // Bool para saber si es mi turno o no
+  bool isMyTurn = false;
+  bool showEndGameModal = false; // para preguntar si vuelve a jugar
+
   int myPoints = 0;
   int rivalPoints = 0;
 
   List<List<int>> currentBoard = List.empty();
 
+  // Array para mostrar si las imagenes son visible o no
+  List<dynamic> imagesVisibility = List.generate(16, (index) => false);
+
+  // int para saber cuantas cartas has levantado, la lista de  abajo es el index en el GridLayout de las cartas movidas durante el turno
+  int flippedCards = 0;
+  List<int> indexFlippedCards = [];
+  
+  int previousCardValue = 0; // int para comparar si las 2 cartas son iguales
+
   bool file_saving = false;
   bool file_loading = false;
 
+  // IMPORTANTE PARA QUE FUNCIONE DEBIDO A ERROR CON LAS IMAGENES
+  Map<String, dynamic> imageMap = {};
+  String jsonImagePath = "/home/patricio/Documentos/imagenesMemoryBase64.json";
+
   AppData() {
     _getLocalIpAddress();
+  }
+
+  Future<Map<String, dynamic>> loadJsonFromFile(String filePath) async {
+    File file = File(filePath);
+    String jsonString = await file.readAsString();
+    return json.decode(jsonString);
   }
 
   void _getLocalIpAddress() async {
@@ -73,7 +97,7 @@ class AppData with ChangeNotifier {
 
     _socketClient = IOWebSocketChannel.connect("ws://$ip:$port");
     _socketClient!.stream.listen(
-      (message) {
+      (message) async {
         final data = jsonDecode(message);
 
         /*if (connectionStatus != ConnectionStatus.matchmaking) {
@@ -86,8 +110,13 @@ class AppData with ChangeNotifier {
         switch (data['type']) {
           case 'start_game':
           // Esto quiere decir que encontraste rival y comienza la partida
-            print("Mi rival es = ${data['rival_name']}");
+            rival_name = data['rival_name'];
+            rival_id = data['rival_id'];
             //connectionStatus = ConnectionStatus.connected;
+            isMyTurn = !data['isRivalFirst'];
+            // CARGAR IMAGENES A MAP
+            imageMap = await loadJsonFromFile(jsonImagePath);
+            //print(imageMap.keys);
 
             break;
 
@@ -96,6 +125,17 @@ class AppData with ChangeNotifier {
             print("la tabla = ");
             print(currentBoard);
             connectionStatus = ConnectionStatus.connected;
+
+          case 'cards_visibility':
+            imagesVisibility = data['booleans'];
+            break;
+
+          case 'swap_turn':
+            isMyTurn = !isMyTurn;
+
+          case 'end_game':
+            isMyTurn = false;
+
 
           case 'list':
             clients = (data['list'] as List).map((e) => e.toString()).toList();
@@ -289,5 +329,77 @@ class AppData with ChangeNotifier {
     );
 
     return matrix;
+  }
+
+  gameLogic(int cardValue, int cardIndex) async {
+    flippedCards += 1;
+    if (flippedCards == 1) {
+      previousCardValue = cardValue;
+      indexFlippedCards.add(cardIndex);
+    }
+
+    else if (flippedCards == 2) {
+      indexFlippedCards.add(cardIndex);
+
+      if (cardValue == previousCardValue) {
+
+        myPoints += 1;
+      } else {
+        notifyListeners();
+
+        await Future.delayed(const Duration(seconds: 2));
+        for (var i in indexFlippedCards) {
+          print(i);
+          imagesVisibility[i] = false;
+        }
+        sendChangeTurn();
+        notifyListeners();
+      }
+
+      // Reset de valores para siguiente ronda
+      flippedCards = 0;
+      previousCardValue = 0;
+      indexFlippedCards.clear();
+      sendCardsVisibility();
+    }
+    
+    if (imagesVisibility.every((dynamic value) => value == true)) {
+      print("Se acabo la partida");
+      isMyTurn = false;
+      showEndGameModal = true;
+      sendEndGame();
+      notifyListeners();
+      return;
+    }
+
+    notifyListeners();
+  }
+
+  sendCardsVisibility() {
+    final message = {
+      'type': 'cards_visibility',
+      'booleans': imagesVisibility,
+      'destination': rival_id
+    };
+    _socketClient!.sink.add(jsonEncode(message));
+  }
+
+  sendChangeTurn() {
+    final message = {
+      'type': 'swap_turn',
+      'destination': rival_id,
+      'turn_points': myPoints
+    };
+    isMyTurn = !isMyTurn;
+    _socketClient!.sink.add(jsonEncode(message));
+  }
+
+  sendEndGame() {
+    final message = {
+      'type': 'end_game',
+      'destination': rival_id,
+    };
+    isMyTurn = !isMyTurn;
+    _socketClient!.sink.add(jsonEncode(message));
   }
 }
