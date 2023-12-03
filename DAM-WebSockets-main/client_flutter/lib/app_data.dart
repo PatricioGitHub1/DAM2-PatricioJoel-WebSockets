@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:web_socket_channel/io.dart';
@@ -36,7 +37,7 @@ class AppData with ChangeNotifier {
 
   // Bool para saber si es mi turno o no
   bool isMyTurn = false;
-  bool showEndGameModal = false; // para preguntar si vuelve a jugar
+  bool isWinner = false;
 
   int myPoints = 0;
   int rivalPoints = 0;
@@ -49,8 +50,10 @@ class AppData with ChangeNotifier {
   // int para saber cuantas cartas has levantado, la lista de  abajo es el index en el GridLayout de las cartas movidas durante el turno
   int flippedCards = 0;
   List<int> indexFlippedCards = [];
-  
   int previousCardValue = 0; // int para comparar si las 2 cartas son iguales
+
+  // Contexto de la pantalla Connected
+  BuildContext ?connectedContext;
 
   bool file_saving = false;
   bool file_loading = false;
@@ -122,7 +125,6 @@ class AppData with ChangeNotifier {
 
           case 'new_board':
             currentBoard = parseJsonMatrix(data['board']);
-            print("la tabla = ");
             print(currentBoard);
             connectionStatus = ConnectionStatus.connected;
 
@@ -132,11 +134,12 @@ class AppData with ChangeNotifier {
 
           case 'swap_turn':
             isMyTurn = !isMyTurn;
+            rivalPoints = data['points'];
 
           case 'end_game':
             isMyTurn = false;
-
-
+            showModal(connectedContext!);
+            break;
           case 'list':
             clients = (data['list'] as List).map((e) => e.toString()).toList();
             clients.remove(mySocketId);
@@ -200,7 +203,6 @@ class AppData with ChangeNotifier {
       'name' : username
     };
     _socketClient!.sink.add(jsonEncode(usernameMessage));
-    print("Enviado username ${usernameMessage}");
   }
 
   disconnectFromServer() async {
@@ -349,7 +351,6 @@ class AppData with ChangeNotifier {
 
         await Future.delayed(const Duration(seconds: 2));
         for (var i in indexFlippedCards) {
-          print(i);
           imagesVisibility[i] = false;
         }
         sendChangeTurn();
@@ -365,10 +366,9 @@ class AppData with ChangeNotifier {
     
     if (imagesVisibility.every((dynamic value) => value == true)) {
       print("Se acabo la partida");
-      isMyTurn = false;
-      showEndGameModal = true;
       sendEndGame();
       notifyListeners();
+      showModal(connectedContext!);
       return;
     }
 
@@ -388,18 +388,53 @@ class AppData with ChangeNotifier {
     final message = {
       'type': 'swap_turn',
       'destination': rival_id,
-      'turn_points': myPoints
+      'points': myPoints
     };
     isMyTurn = !isMyTurn;
     _socketClient!.sink.add(jsonEncode(message));
   }
 
+
+
   sendEndGame() {
+    isMyTurn = false;
     final message = {
       'type': 'end_game',
       'destination': rival_id,
+      'sender_points': myPoints,
+      'rival_points': rivalPoints
     };
     isMyTurn = !isMyTurn;
     _socketClient!.sink.add(jsonEncode(message));
   }
+
+  Future<void> showModal(BuildContext context) async {
+  await showCupertinoModalPopup(
+    context: context,
+    builder: (BuildContext context) => CupertinoActionSheet(
+      title: Text(isWinner ? "You WON!" : "You Losed..."),
+      message: const Text("Would you like to Play Again?"),
+      actions: [
+        CupertinoActionSheetAction(
+          onPressed: () {
+            Navigator.pop(context);
+            // Handle 'Yes' option
+            // Add your logic here
+          },
+          child: const Text("Yes"),
+        ),
+        CupertinoActionSheetAction(
+          onPressed: () {
+            Navigator.pop(context);
+            disconnectFromServer();
+          },
+          child: const Text("No"),
+        ),
+      ],
+    ),
+  );
+
+  // This code will be executed after the modal is dismissed
+  disconnectFromServer();
+}
 }

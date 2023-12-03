@@ -15,46 +15,14 @@ class LayoutConnected extends StatefulWidget {
 }
 
 class _LayoutConnectedState extends State<LayoutConnected> {
-  showModal(BuildContext context, AppData appData) {
-    AppData appData = Provider.of<AppData>(context);
-  showCupertinoModalPopup(
-    context: context,
-    builder: (BuildContext context) => CupertinoActionSheet(
-      title: const Text("End Game"),
-      message: const Text("Would you like to Play Again?"),
-      actions: [
-        CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(context);
-            // Handle 'Yes' option
-            // Add your logic here
-          },
-          child: const Text("Yes"),
-        ),
-        CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(context);
-            appData.disconnectFromServer();
-          },
-          child: const Text("No"),
-        ),
-      ],
-    ),
-  );
-}
+  
   @override
   Widget build(BuildContext context) {
     AppData appData = Provider.of<AppData>(context);
-
-    /*WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });*/
-
+    appData.connectedContext = context;
+    
     return CupertinoPageScaffold(
+      
         navigationBar: CupertinoNavigationBar(
           leading: CupertinoButton(
             child: const Icon(
@@ -100,7 +68,7 @@ class _LayoutConnectedState extends State<LayoutConnected> {
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
                         ),
                         Text(
-                          appData.username,
+                          "${appData.username} | Points: ${appData.myPoints}",
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: CupertinoColors.activeGreen),
                         ),
                       ],
@@ -118,7 +86,7 @@ class _LayoutConnectedState extends State<LayoutConnected> {
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
                         ),
                         Text(
-                          appData.rival_name,
+                          "${appData.rival_name} | Points: ${appData.rivalPoints}",
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: CupertinoColors.systemRed),
                         ),
                       ],
@@ -158,7 +126,6 @@ class _LayoutConnectedState extends State<LayoutConnected> {
                           
                           return GestureDetector(
                             onTap: () {
-                              print("Clicked on image: $imageNumber");
                               if (appData.imagesVisibility[index] == false) {
                                   if (appData.isMyTurn && appData.flippedCards < 2) {
                                     appData.imagesVisibility[index] = !appData.imagesVisibility[index];
@@ -167,7 +134,6 @@ class _LayoutConnectedState extends State<LayoutConnected> {
                                   }
                                   
                               }
-                              
                             },
                             /*child: Image.asset(
                               imagePath,
@@ -191,6 +157,7 @@ class _LayoutConnectedState extends State<LayoutConnected> {
             ))
           
           ],
+          
         ));
   }
 }
