@@ -1,4 +1,10 @@
+com\project\AppData$ConnectionStatus.class
 com\project\CtrlLayoutConnected.class
-com\project\AppSocketsClient.class
+com\project\AppData.class
+com\project\Main.class
 com\project\AppSocketsClient$OnCloseObject.class
 com\project\CtrlLayoutConnecting.class
+com\project\CtrlLayoutDisconnected.class
+com\project\CtrlLayoutDisconnecting.class
+com\project\AppSocketsClient.class
+com\project\UtilsViews.class

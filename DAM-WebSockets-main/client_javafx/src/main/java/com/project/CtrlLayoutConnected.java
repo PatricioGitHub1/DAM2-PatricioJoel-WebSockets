@@ -6,6 +6,10 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+import org.json.JSONObject;
+
+import com.project.AppData.ConnectionStatus;
+
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -19,6 +23,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 
 public class CtrlLayoutConnected {
 
@@ -33,7 +38,9 @@ public class CtrlLayoutConnected {
 
     private ArrayList<ImageView> imgs= new ArrayList<ImageView>();
 
-    private boolean loadingImage = true;
+    private AppData appData = AppData.getInstance();
+
+    // private JSONObject board = appData.getNewBoard();
 
     @FXML
     private void initialize() {
@@ -41,64 +48,34 @@ public class CtrlLayoutConnected {
         pointsLabel2.setText("0");
         imgs.add(img1); imgs.add(img2); imgs.add(img3); imgs.add(img4); imgs.add(img5); imgs.add(img6); imgs.add(img7); imgs.add(img8);
         imgs.add(img9); imgs.add(img10); imgs.add(img11); imgs.add(img12); imgs.add(img13); imgs.add(img14); imgs.add(img15); imgs.add(img16);
-        loadImages();
+        
+        // Afegim un event del tipus onMouseClicked per cadascuna de les ImageViews
+        for (ImageView img : imgs) {
+            img.setImage(new Image(getClass().getResource("/assets/back_image.png").toString()));
+            img.setOnMouseClicked(this::handleImageViewClick);
+        }
+        loadImages(appData.newBoard());
     }
 
-    private void loadImages() {
-        Random random = new Random();
-        for (int i=0; i < imgs.size(); i++) {
-            imgs.get(i).setImage(new Image(getClass().getResource("/assets/" + "image" + (random.nextInt(4) + 1) + ".png").toString()));
+    // Carreguem les imatges en els ImageViews corresponents
+    private void loadImages(List<List<Integer>> rowsList) {
+        for (int i = 0; i < imgs.size(); i++) {
+            int row = i / rowsList.get(0).size();  // Calculem l'índex de la fila corresponent
+            int col = i % rowsList.get(0).size();  // Calculem l'índex de la columna corresponent
+            int imageNumber = rowsList.get(row).get(col);  // Obtenim el número de la matriu
+            String imageName = "image" + imageNumber + ".png"; // Obtenim la ruta de la imatge
+            imgs.get(i).setImage(new Image(getClass().getResource("/assets/" + imageName).toString())); // Establim una imatge en l'ImageView actual
+            imgs.get(i).setId(imageName);  // Establim l'ID per emmagatzemar el nom de la imatge
+            imgs.get(i).setOnMouseClicked(this::handleImageViewClick);  // Establim l'event
         }
     }
-    /*
-    private void loadImageAtIndex(int index) {
-        Random random = new Random();
-        if (!loadingImage) {
-            for (int i=0; i < imgs.size(); i++) {
-                imgs.get(i).setImage(null);
-            }
-            this.loadingImage = true;
-        }
-        else {
-            if (index < imgs.size()) {
-                loadImageBackground((image) -> {
-                    imgs.get(index).setImage(image); // Estableix una imatge per l'ImageView actual
-                    int currentImageIndex = index + 1; // Actualiza l'índex de l'imatge actual
-                    // Programa la càrrega de la pròxima imatge després d'un retard
-                    Platform.runLater(() -> {
-                        loadImageAtIndex(currentImageIndex);
-                    });
-                }, "image" + (random.nextInt(3) + 1) + ".png");
-            }
-        }
+
+    // Manegem l'event de l'ImageView
+    private void handleImageViewClick(MouseEvent event) {
+        ImageView clickedImageView = (ImageView) event.getSource();
+        System.out.println("Soc l'ImageView " + clickedImageView.getId() + "!");
     }
     
-    public void loadImageBackground(Consumer<Image> callBack, String imageName) {
-        Random random = new Random();
-        // Utilitza un thread per tal d'evitar bloquejar l'UI
-        CompletableFuture<Image> futureImage = CompletableFuture.supplyAsync(() -> {
-            try {
-                // Espera entre 5 i 50 segons per simular un temps de càrrega llarg
-                Thread.sleep(random.nextInt(3000) + 1000);
-                // Carrega l'informació de la carpeta assets
-                Image image = new Image(getClass().getResource("/assets/" + imageName).toString());
-                return image;
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                return null;
-            }
-        })
-        .exceptionally(ex -> {
-            ex.printStackTrace();
-            return null;
-        });
-
-        futureImage.thenAcceptAsync(result -> {
-            callBack.accept(result);
-        }, Platform::runLater);
-    }
-    */
     /*
     @FXML
     private Label serverAddressLabel;

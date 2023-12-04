@@ -18,6 +18,6 @@
          </children>
       </AnchorPane>
       <VBox alignment="CENTER" spacing="75.0" />
-      <Text layoutX="347.0" layoutY="305.0" style="-fx-font-size: 14; -fx-fill: red;" text="Dessconnectant..." AnchorPane.leftAnchor="347.0" AnchorPane.rightAnchor="347.0" />
+      <Text layoutX="347.0" layoutY="305.0" style="-fx-font-size: 14; -fx-fill: red;" text="Desconnectant..." AnchorPane.leftAnchor="347.0" AnchorPane.rightAnchor="347.0" />
    </children>
 </AnchorPane>
