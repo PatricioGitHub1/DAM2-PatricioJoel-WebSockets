@@ -18,12 +18,15 @@ enum ConnectionStatus {
 }
 
 class AppData with ChangeNotifier {
+  
   String ip = "localhost";
   String port = "8888";
   
   String username = "User_${Random().nextInt(100)}";
   String rival_name = "";
   String rival_id = "";
+
+  List<dynamic> winnersList = [];
 
   IOWebSocketChannel? _socketClient;
   ConnectionStatus connectionStatus = ConnectionStatus.disconnected;
@@ -143,11 +146,11 @@ class AppData with ChangeNotifier {
             notifyListeners();
             showModal(connectedContext!);
             break;
-          case 'list':
+          /*case 'list':
             clients = (data['list'] as List).map((e) => e.toString()).toList();
             clients.remove(mySocketId);
             messages += "List of clients: ${data['list']}\n";
-            break;
+            break;*/
           case 'id':
           // Esto lo recibes al entablar conexion con el server, te pasa tu ID
             mySocketId = data['value'];
@@ -407,11 +410,17 @@ class AppData with ChangeNotifier {
       'sender_points': myPoints,
       'rival_points': rivalPoints
     };
+    Map<String, dynamic> newEntry;
     if (myPoints > rivalPoints) {
+      newEntry = {"winner":username,"opponent":rival_name, "points": myPoints};
       isWinner = true;
     } else {
+      newEntry = {"winner":rival_name,"opponent":username, "points": rivalPoints};
       isWinner = false;
     }
+    winnersList.add(newEntry);
+    addElementToJson();
+
     isMyTurn = !isMyTurn;
     _socketClient!.sink.add(jsonEncode(message));
     showModal(connectedContext!);
@@ -473,5 +482,43 @@ class AppData with ChangeNotifier {
       disconnectFromServer();
     }
     
+  }
+
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    return File('$path/memoryWinners.json');
+  }
+
+  Future<void> createFileIfNotExists() async {
+    final file = await _localFile;
+    if (!await file.exists()) {
+      await file.create();
+      await file.writeAsString('[{"winner": "Bob", "opponent": "John", "points": 6}]');
+    }
+    
+  }
+
+  void readJson() async {
+    File file = await _localFile;
+    String jsonString = file.readAsStringSync();
+
+    winnersList = jsonDecode(jsonString);
+
+  }
+
+  Future<void> addElementToJson() async {
+    File file = await _localFile;
+
+    // Convert messagesAsList to JSON string
+    String jsonString = jsonEncode(winnersList);
+
+    // Write the JSON string to the file
+    await file.writeAsString(jsonString);
   }
 }

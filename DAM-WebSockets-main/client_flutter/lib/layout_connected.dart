@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:client_flutter/layout_ranking.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -48,6 +49,14 @@ class _LayoutConnectedState extends State<LayoutConnected> {
             ), 
             onPressed: () {
               // Ir al ranking
+              appData.createFileIfNotExists();
+              appData.readJson();
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => const LayoutRanking(),
+                ),
+              );
             }),
 
         ),
