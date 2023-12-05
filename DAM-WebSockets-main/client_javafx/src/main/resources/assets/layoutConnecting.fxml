@@ -18,6 +18,6 @@
          </children>
       </AnchorPane>
       <VBox alignment="CENTER" spacing="75.0" />
-      <Text layoutX="360.0" layoutY="305.0" style="-fx-font-size: 14; -fx-fill: green;" text="Connectant..." AnchorPane.leftAnchor="360.0" AnchorPane.rightAnchor="360.0" />
+      <Text layoutX="360.0" layoutY="305.0" style="-fx-font-size: 14; -fx-fill: green;" text="Esperant jugador..." AnchorPane.leftAnchor="360.0" AnchorPane.rightAnchor="360.0" />
    </children>
 </AnchorPane>

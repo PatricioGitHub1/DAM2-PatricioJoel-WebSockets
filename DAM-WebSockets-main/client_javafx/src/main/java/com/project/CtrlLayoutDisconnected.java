@@ -44,47 +44,17 @@ public class CtrlLayoutDisconnected {
         ipTextField.setText(appData.getIp());
         portTextField.setText(appData.getPort());
         nameTextField.setText(appData.getName());
-        /*
-        Platform.runLater(() -> {
-            draw();
-        });
-        */
     }
 
     @FXML
     private void connectToServer() {
+        if (nameTextField.getText().isEmpty() || nameTextField.getText().isBlank()) {
+            return;
+        }
         appData.setIp(ipTextField.getText());
         appData.setPort(portTextField.getText());
         appData.setName(nameTextField.getText());
         appData.connectToServer();
 
     }
-    /*
-    private void draw() {
-        double height = refAnchorPane.getHeight();
-        double bottom = height - 100;
-
-        // Crear el rectangle
-        rect.setX(-25.0);
-        rect.setY(-25.0);
-        rect.setWidth(50.0);
-        rect.setHeight(50.0);
-        rect.setStroke(Color.rgb(100, 100, 100, 1.0));
-        rect.setStrokeWidth(2.0);  // Establir el gruix del contorn a 2 px
-        rect.setFill(null); // No emplenar l'interior del rectangle
-
-        AnchorPane.setLeftAnchor(rect, 50.0);
-        AnchorPane.setTopAnchor(rect, bottom);
-        refAnchorPane.getChildren().add(rect);
-
-        // Crear el cercle
-        circle.setCenterX(0.0f);
-        circle.setRadius(25.0); 
-        circle.setFill(Color.BLUE);
-
-        AnchorPane.setLeftAnchor(circle, 50.0);
-        AnchorPane.setTopAnchor(circle, bottom);
-        refAnchorPane.getChildren().add(circle);
-    }
-    */
 }

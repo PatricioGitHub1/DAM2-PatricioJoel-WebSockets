@@ -1,6 +1,7 @@
 package com.project;
 
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.project.AppSocketsClient.OnCloseObject;
@@ -15,8 +16,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 public class AppData {
 
@@ -25,7 +30,12 @@ public class AppData {
     private String ip = "localhost";
     private String port = "8888";
     private String name = "";
+    /*
+    private String rival_name = "";
+    private String rival_id = "";
+    */
     private ConnectionStatus connectionStatus = ConnectionStatus.DISCONNECTED;
+
     private String mySocketId;
     private List<String> clients = new ArrayList<>();
     private String selectedClient = "";
@@ -36,13 +46,41 @@ public class AppData {
         DISCONNECTED, DISCONNECTING, CONNECTING, CONNECTED
     }
 
-    private AppData() {
-    }
+    // Boolean per saber si és el meu torn o no
+    boolean isMyTurn = false;
+    boolean isWinner = false;
+
+    // Enter per saber els meus punts i els del meu rival
+    int myPoints = 0;
+    int rivalPoints = 0;
+
+    ArrayList<List<Integer>> currentBoard = new ArrayList<>();
+
+    // Array para mostrar si las imagenes son visible o no
+    ArrayList<Boolean> imagesVisibility = new ArrayList<>(Collections.nCopies(16, false));
+
+    // Enter per saber quantes cartes has aixecat
+    int flippedCards = 0;
+
+    // Aquest ArrayList és l'índex en e GridLayout de les cartes que s'han mogut durant el torn
+    ArrayList<Integer> indexFlippedCards = new ArrayList<>();
+
+    // Enter per comparar si les 2 cartes són iguals
+    int previousCardValue = 0;
+
+    boolean file_saving = false;
+    boolean file_loading = false;
+
+    // IMPORTANT PER A QUE FUNCIONI DEGUT A UN ERROR AMB LES IMATGES
+    Map<String, Object> imageMap = new HashMap<>();
+    String jsonImagePath = "/Users/joelb/Documents/imagenesMemoryBase64.json";
+    
+    private AppData() {}
 
     public static AppData getInstance() {
         return INSTANCE;
     }
-
+    
     public String getLocalIPAddress() throws SocketException, UnknownHostException {
         
         String localIp = "";
@@ -83,6 +121,19 @@ public class AppData {
         connectionStatus = ConnectionStatus.CONNECTING;
         socketClient.connect();
         UtilsViews.setViewAnimating("Connecting");
+        /*
+        PauseTransition pause = new PauseTransition(Duration.seconds(1));
+        pause.setOnFinished(event -> {
+            if (connectionStatus == ConnectionStatus.CONNECTED) {
+                CtrlLayoutConnected ctrlConnected = (CtrlLayoutConnected) UtilsViews.getController("Connected");
+                // ctrlConnected.updateInfo();
+                UtilsViews.setViewAnimating("Connected");
+            } else {
+                UtilsViews.setViewAnimating("Disconnected");
+            }
+        });
+        pause.play();
+        */
         PauseTransition pause = new PauseTransition(Duration.seconds(1));
         pause.setOnFinished(event -> {
             if (connectionStatus == ConnectionStatus.CONNECTED) {
@@ -121,7 +172,16 @@ public class AppData {
         String type = data.getString("type");
         switch (type) {
             case "start_game":
-                print("Mi rival es " + data.getJSONString("name"));
+                System.out.println("Mi rival es " + data.getString("rival_name"));
+                /*
+                socketClient.connect();
+                PauseTransition pause = new PauseTransition(Duration.seconds(1));
+                pause.setOnFinished(event -> {
+                    UtilsViews.setViewAnimating("Connected");
+                });
+                pause.play();
+                */
+                break;
             case "list":
                 clients.clear();
                 data.getJSONArray("list").forEach(item -> clients.add(item.toString()));
@@ -130,11 +190,11 @@ public class AppData {
                 updateClientList();
                 break;
             case "id":
-                JSONObject message1 = new JSONObject();
-                message1.put("type", "username");
-                message1.put("id", data.getString("id"));
-                message1.put("name", "Joel");
-                socketClient.send(message1.toString());
+                JSONObject msg = new JSONObject();
+                msg.put("type", "username");
+                msg.put("id", data.getString("value"));
+                msg.put("name", getName());
+                socketClient.send(msg.toString());
                 // messages.append("Id received: ").append(data.getString("value")).append("\n");
                 break;
             case "connected":
@@ -231,6 +291,115 @@ public class AppData {
         message.put("value", msg);
         message.put("destination", selectedClient);
         socketClient.send(message.toString());
+    }
+    /*
+    public JSONObject newBoard() {
+        
+        // Especifiquem les dimensions de la matriu
+        int rows = 4;
+        int cols = 4;
+
+        // Creem un Array en 2D per representar la matriu
+        int[][] matrix = new int[rows][cols];
+        
+        // Creem un ArrayList per mantenir constància sobre les ocurrències
+        ArrayList<Integer> occurrences = new ArrayList<>();
+        for (int i = 1; i <= 8; i++) {
+            occurrences.add(2);
+        }
+
+        // Inicialitzem la matriu amb números entre l'1 i el 8
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                int number = generateUniqueNumber(occurrences);
+                matrix[i][j] = number;
+                occurrences.set(number - 1, occurrences.get(number - 1) - 1);
+            }
+        }
+
+        // Creem una llista per a cadascuna de les files
+        List<List<Integer>> rowsList = new ArrayList<>();
+
+        // Populem la llista amb els números de cadascuna de les files
+        for (int i = 0; i < rows; i++) {
+            List<Integer> rowList = new ArrayList<>();
+            for (int j = 0; j < cols; j++) {
+                rowList.add(matrix[i][j]);
+            }
+            rowsList.add(rowList);
+        }
+
+        // Imprimim les llistes per cada fila per pantalla
+        for (int i = 0; i < rows; i++) {
+            System.out.println(rowsList.get(i));
+        }
+        
+        // Creem un objecte JSON, el qual serà el taulell del joc
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("type", "new_board");
+
+        // Creem un JSONArray per al taulell del joc fent servir rowsList
+        JSONArray boardArray = new JSONArray(rowsList);
+        jsonObject.put("board", boardArray);
+
+        // Imprimim el taulell del joc
+        System.out.println("=================\n" + jsonObject);
+
+        // Retornem el taulell del joc
+        return jsonObject;
+    }
+    */
+    public List<List<Integer>> newBoard() {
+        
+        // Especifiquem les dimensions de la matriu
+        int rows = 4;
+        int cols = 4;
+
+        // Creem un Array en 2D per representar la matriu
+        int[][] matrix = new int[rows][cols];
+        
+        // Creem un ArrayList per mantenir constància sobre les ocurrències
+        ArrayList<Integer> occurrences = new ArrayList<>();
+        for (int i = 1; i <= 8; i++) {
+            occurrences.add(2);
+        }
+
+        // Inicialitzem la matriu amb números entre l'1 i el 8
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                int number = generateUniqueNumber(occurrences);
+                matrix[i][j] = number;
+                occurrences.set(number - 1, occurrences.get(number - 1) - 1);
+            }
+        }
+
+        // Creem una llista per a cadascuna de les files
+        List<List<Integer>> rowsList = new ArrayList<>();
+
+        // Populem la llista amb els números de cadascuna de les files
+        for (int i = 0; i < rows; i++) {
+            List<Integer> rowList = new ArrayList<>();
+            for (int j = 0; j < cols; j++) {
+                rowList.add(matrix[i][j]);
+            }
+            rowsList.add(rowList);
+        }
+
+        // Imprimim les llistes per cada fila per pantalla
+        for (int i = 0; i < rows; i++) {
+            System.out.println(rowsList.get(i));
+        }
+
+        // Retornem el taulell del joc
+        return rowsList;
+    }
+    
+    private int generateUniqueNumber(List<Integer> occurrences) {
+        int number;
+        do {
+            number = new Random().nextInt(8) + 1;
+        } while (occurrences.get(number - 1) == 0);
+        return number;
     }
 
     public String getIp() {
