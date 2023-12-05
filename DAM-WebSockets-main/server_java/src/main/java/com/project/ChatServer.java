@@ -237,7 +237,6 @@ public class ChatServer extends WebSocketServer {
                     connections.add(desti);
                 }
             }
-            System.out.println("DESTINOS = "+connections);
             // Generamos tablero y lo enviamos a los jugadores por primera vez
             int[][] newBoard = appData.randomBoard();
             

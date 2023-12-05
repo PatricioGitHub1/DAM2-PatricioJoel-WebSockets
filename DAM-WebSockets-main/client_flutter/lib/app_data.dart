@@ -61,8 +61,8 @@ class AppData with ChangeNotifier {
   bool file_loading = false;
 
   // IMPORTANTE PARA QUE FUNCIONE DEBIDO A ERROR CON LAS IMAGENES
-  Map<String, dynamic> imageMap = {};
-  String jsonImagePath = "/home/patricio/Documentos/imagenesMemoryBase64.json";
+  /*Map<String, dynamic> imageMap = {};
+  String jsonImagePath = "/home/patricio/Documentos/imagenesMemoryBase64.json";*/
 
   AppData() {
     _getLocalIpAddress();
@@ -116,7 +116,7 @@ class AppData with ChangeNotifier {
             //connectionStatus = ConnectionStatus.connected;
             isMyTurn = !data['isRivalFirst'];
             // CARGAR IMAGENES A MAP
-            imageMap = await loadJsonFromFile(jsonImagePath);
+            //imageMap = await loadJsonFromFile(jsonImagePath);
             //print(imageMap.keys);
 
             break;

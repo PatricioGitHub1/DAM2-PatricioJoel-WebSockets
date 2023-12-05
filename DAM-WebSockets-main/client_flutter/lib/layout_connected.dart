@@ -1,12 +1,8 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:client_flutter/layout_ranking.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_data.dart';
-//import 'widget_selectable_list.dart';
 
 class LayoutConnected extends StatefulWidget {
   const LayoutConnected({Key? key}) : super(key: key);
@@ -37,7 +33,7 @@ class _LayoutConnectedState extends State<LayoutConnected> {
               appData.disconnectFromServer();
             }),
 
-          middle: Text("Memory Game ${appData.username}"),
+          middle: Text("MemoryGame ${appData.username}"),
 
           trailing: CupertinoButton(
             child: const Icon(
@@ -126,12 +122,7 @@ class _LayoutConnectedState extends State<LayoutConnected> {
                           int col = index % 4;
                           int imageNumber = appData.currentBoard[row][col];
 
-                          //String imagePath = 'assets/images/image$imageNumber.png';
-                          //String imagePath = "/home/patricio/Documentos/ImagenesMemory/images/image$imageNumber.png";
-
-                          // ignore: unused_local_variable
-                          List<int> imageBytes = base64Decode(appData.imageMap["image$imageNumber.png"]!);
-                          Uint8List uint8List = Uint8List.fromList(imageBytes);
+                          String imagePath = 'assets/images/image$imageNumber.png';
                           
                           return GestureDetector(
                             onTap: () {
@@ -144,13 +135,11 @@ class _LayoutConnectedState extends State<LayoutConnected> {
                                   
                               }
                             },
-                            /*child: Image.asset(
+                            child: appData.imagesVisibility[index]
+                            ? Image.asset(
                               imagePath,
                               fit: BoxFit.cover,
-                            ),*/
-                            //child: Image.memory(uint8List, fit: BoxFit.cover),
-                            child: appData.imagesVisibility[index]
-                            ? Image.memory(uint8List, fit: BoxFit.cover)
+                            )
                             : const ColoredBox(color: CupertinoColors.activeBlue),
                           );
                         },
